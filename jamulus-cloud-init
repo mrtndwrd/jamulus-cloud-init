@@ -1,0 +1,30 @@
+#cloud-config
+
+# Use instead of the `get.docker.com` thing when `gpg` is installed on the GH
+# image (private issue: https://code.greenhost.net/greenhost/te/-/issues/29)
+# apt:
+#   sources:
+#     docker.list:
+#       source: deb [arch=amd64] https://download.docker.com/linux/ubuntu $RELEASE stable
+#       keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+# 
+# packages:
+#   - docker-ce
+#   - docker-ce-cli
+
+runcmd:
+  - 'apt-get update'
+  - 'apt-get install -y curl wget'
+  - 'iptables -A INPUT -p tcp -m tcp --dport 22124 -j ACCEPT'
+  - 'iptables -A INPUT -p udp -m udp --dport 22124 -j ACCEPT'
+  - 'netfilter-persistent save'
+  - 'curl -sS https://get.docker.com/ | sh'
+  - |
+    docker run \
+      -e TZ=Europe/Amsterdam \
+      --name jamulus \
+      -d --rm \
+      -p 22124:22124/udp \
+      -v $(pwd)/jam:/jam \
+      grundic/jamulus \
+      -n -s -p 22124 -l /jam/jamulus.log -w "Welcome to Maarten's Jamulus docker server."
